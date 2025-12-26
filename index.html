@@ -1,0 +1,937 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>주간 업무일지</title>
+    <style>
+        /* CSS 변수: 다크 모드 및 주요 색상 관리 */
+        :root {
+            --text-color: #333;
+            --background-color: #f9fbfd;
+            --primary-color: #4a6da7;
+            --secondary-bg-color: white;
+            --border-color: #d0d9e6;
+            --box-shadow-color: rgba(0, 0, 0, 0.05);
+            --secondary-color: #f5f9ff;
+            --light-text: #666;
+            --success-color: #28a745;
+            --warning-color: #ffc107;
+            --danger-color: #dc3545;
+
+            /* Task option colors */
+            --admin-bg: #e0f2f7; /* Light Blue BG */
+            --admin-border: #007bff; /* Darker Blue Border */
+            --indirect-bg: #e6ffe6; /* Light Green BG */
+            --indirect-border: #28a745; /* Darker Green Border */
+            --education-bg: #fff0e6; /* Light Orange BG */
+            --education-border: #ff8c00; /* Darker Orange Border */
+            --meeting-bg: #f5e6ff; /* Light Purple BG */
+            --meeting-border: #6f42c1; /* Darker Purple Border */
+            --etc-bg: #f8f9fa; /* Light Gray BG */
+            --etc-border: #6c757d; /* Darker Gray Border */
+        }
+
+        body.dark-mode {
+            --text-color: #e0e0e0;
+            --background-color: #2c2c2c;
+            --primary-color: #8ab4f8;
+            --secondary-bg-color: #3a3a3a;
+            --border-color: #555;
+            --box-shadow-color: rgba(255, 255, 255, 0.1);
+            --secondary-color: #4a4a4a;
+            --light-text: #b0b0b0;
+            --success-color: #40d662;
+            --warning-color: #ffeb3b;
+            --danger-color: #f44336;
+
+            /* Task option colors - Dark Mode */
+            --admin-bg: #2d3a4c;
+            --admin-border: #8ab4f8;
+            --indirect-bg: #324b32;
+            --indirect-border: #40d662;
+            --education-bg: #4c3a2d;
+            --education-border: #fdd835;
+            --meeting-bg: #3a2d4c;
+            --meeting-border: #b39ddb;
+            --etc-bg: #4a4a4a;
+            --etc-border: #b0b0b0;
+        }
+
+        body {
+            font-family: 'Noto Sans KR', -apple-system, BlinkMacSystemFont, sans-serif;
+            max-width: 1200px;
+            margin: 30px auto;
+            padding: 20px;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+            color: var(--primary-color);
+            font-weight: 700;
+        }
+
+        .week-control,
+        .tools {
+            text-align: center;
+            margin-bottom: 20px;
+            background-color: var(--secondary-bg-color);
+            padding: 12px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px var(--box-shadow-color);
+            transition: background-color 0.3s, box-shadow 0.3s;
+        }
+
+        .week-control {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        #weekLabel {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+
+        button {
+            padding: 8px 15px;
+            border: none;
+            border-radius: 5px;
+            background-color: var(--primary-color);
+            color: white;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: background-color 0.2s;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        button.small {
+            padding: 4px 8px;
+            font-size: 0.8em;
+        }
+
+        button.success {
+            background-color: var(--success-color);
+        }
+
+        button.warning {
+            background-color: var(--warning-color);
+            color: #333;
+        }
+
+        button.danger {
+            background-color: var(--danger-color);
+        }
+
+        #tableContainer {
+            background-color: var(--secondary-bg-color);
+            box-shadow: 0 3px 10px var(--box-shadow-color);
+            border-radius: 8px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        #worklog {
+            width: 100%;
+            border-collapse: collapse;
+            table-layout: fixed;
+        }
+
+        #worklog th,
+        #worklog td {
+            border: 1px solid var(--border-color);
+            vertical-align: middle;
+            padding: 0;
+            /* 셀 내부 여백은 wrapper에서 조정 */
+        }
+
+        #worklog th {
+            background: var(--primary-color);
+            color: white;
+            height: 45px;
+            font-size: 0.95em;
+            font-weight: 600;
+            text-align: center;
+            vertical-align: middle;
+        }
+
+        .time-col {
+            width: 100px;
+            text-align: center;
+            font-weight: bold;
+            font-size: 0.9em;
+            background-color: var(--secondary-color);
+            color: var(--primary-color);
+            padding: 8px;
+            vertical-align: middle;
+        }
+
+        textarea {
+            width: 100%;
+            height: auto;
+            min-height: 40px;
+            border: none;
+            resize: vertical;
+            padding: 8px;
+            box-sizing: border-box;
+            font-size: 0.9em;
+            font-family: inherit;
+            word-wrap: break-word;
+            overflow-y: hidden;
+            background-color: transparent;
+            color: var(--text-color);
+            transition: color 0.3s, background-color 0.3s;
+        }
+
+        textarea:focus {
+            outline: none;
+        }
+
+        .tools {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .tools>div {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .tools input[type="text"] {
+            padding: 8px;
+            width: 200px;
+            border: 1px solid var(--border-color);
+            border-radius: 5px;
+            background-color: var(--secondary-bg-color);
+            color: var(--text-color);
+            transition: background-color 0.3s, color 0.3s, border-color 0.3s;
+        }
+
+        .highlight {
+            background-color: #fff9c4 !important;
+        }
+
+        body.dark-mode .highlight {
+            background-color: #55553b !important;
+        }
+
+        .lunch-time-cell {
+            background-color: var(--secondary-color);
+            text-align: center;
+            font-weight: bold;
+            color: var(--primary-color);
+            padding: 8px;
+            vertical-align: middle;
+        }
+
+        .task-selector {
+            width: calc(100% - 10px);
+            padding: 4px;
+            font-size: 0.85em;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            margin: 5px;
+            background-color: var(--secondary-bg-color);
+            color: var(--text-color);
+            transition: background-color 0.3s, color 0.3s, border-color 0.3s;
+        }
+
+        /* Task Selector Option Colors - 기존과 동일 */
+        .task-selector-colored-options option[value="행정"] {
+            background-color: var(--admin-bg);
+            color: var(--admin-border);
+        }
+
+        .task-selector-colored-options option[value="간접"] {
+            background-color: var(--indirect-bg);
+            color: var(--indirect-border);
+        }
+
+        .task-selector-colored-options option[value="교육"] {
+            background-color: var(--education-bg);
+            color: var(--education-border);
+        }
+
+        .task-selector-colored-options option[value="회의"] {
+            background-color: var(--meeting-bg);
+            color: var(--meeting-border);
+        }
+
+        .task-selector-colored-options option[value="기타"] {
+            background-color: var(--etc-bg);
+            color: var(--etc-border);
+        }
+
+
+        /* [핵심 변경] 업무 구분별 셀 스타일 */
+        td.task-admin {
+            background-color: var(--admin-bg);
+        }
+
+        td.task-indirect {
+            background-color: var(--indirect-bg);
+        }
+
+        td.task-education {
+            background-color: var(--education-bg);
+        }
+
+        td.task-meeting {
+            background-color: var(--meeting-bg);
+        }
+
+        td.task-etc {
+            background-color: var(--etc-bg);
+        }
+
+        /* [핵심 변경] 컬러 바 스타일 */
+        .cell-content-wrapper {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            justify-content: space-between;
+            position: relative;
+            padding-left: 5px; /* 컬러 바 공간 확보 */
+            border-left: 3px solid transparent; /* 기본 투명 */
+            box-sizing: border-box;
+            transition: border-left-color 0.3s, background-color 0.3s;
+        }
+
+        /* 컬러 바 적용 (td 배경색과 별개) */
+        td.task-admin .cell-content-wrapper {
+            border-left-color: var(--admin-border);
+        }
+
+        td.task-indirect .cell-content-wrapper {
+            border-left-color: var(--indirect-border);
+        }
+
+        td.task-education .cell-content-wrapper {
+            border-left-color: var(--education-border);
+        }
+
+        td.task-meeting .cell-content-wrapper {
+            border-left-color: var(--meeting-border);
+        }
+
+        td.task-etc .cell-content-wrapper {
+            border-left-color: var(--etc-border);
+        }
+
+        .cell-content-wrapper textarea {
+            flex-grow: 1;
+        }
+
+        .daily-summary {
+            font-size: 0.85em;
+            padding: 8px;
+            text-align: left;
+            background-color: var(--secondary-color);
+            color: var(--primary-color);
+            font-weight: 500;
+            border-top: 1px solid var(--border-color);
+            vertical-align: middle;
+        }
+
+        .dark-mode-toggle {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .dark-mode-toggle input[type="checkbox"] {
+            margin-right: 8px;
+        }
+
+        /* 기존에 존재하던 텍스트 색상 클래스는 제거합니다. */
+
+        .save-feedback {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: var(--success-color);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            opacity: 0;
+            transition: opacity 0.3s ease-in-out;
+            z-index: 1000;
+        }
+
+        .save-feedback.show {
+            opacity: 1;
+        }
+
+        /* 새로운 기능 스타일 */
+        .copy-button {
+            position: absolute;
+            top: 2px;
+            right: 2px;
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            width: 20px;
+            height: 20px;
+            font-size: 10px;
+            cursor: pointer;
+            border-radius: 3px;
+            opacity: 0;
+            transition: opacity 0.2s;
+            z-index: 10;
+        }
+
+        .cell-content-wrapper:hover .copy-button {
+            opacity: 1;
+        }
+
+        footer {
+            margin-top: 20px;
+            text-align: center;
+            font-size: 0.85em;
+            color: var(--light-text);
+        }
+
+        @media print {
+            .tools,
+            .week-control button,
+            .statistics-panel,
+            .copy-button {
+                display: none !important;
+            }
+
+            body {
+                padding: 0;
+                margin: 0;
+            }
+
+            #tableContainer {
+                box-shadow: none;
+                border-radius: 0;
+            }
+
+            #worklog th,
+            #worklog td {
+                border-color: #ccc;
+            }
+
+            #worklog {
+                font-size: 0.8em;
+            }
+
+            textarea {
+                height: 40px !important;
+                font-size: 0.8em !important;
+                color: black !important;
+                resize: none !important;
+            }
+
+            .task-selector {
+                font-size: 0.8em !important;
+            }
+
+            .daily-summary {
+                font-size: 0.8em;
+                padding: 5px;
+            }
+
+            .lunch-time-cell {
+                background-color: #f0f0f0 !important;
+                color: #333 !important;
+            }
+
+            /* 인쇄 시 배경색 유지 */
+            td.task-admin {
+                background-color: #e0f2f7 !important;
+                -webkit-print-color-adjust: exact;
+                color-adjust: exact;
+            }
+
+            td.task-indirect {
+                background-color: #e6ffe6 !important;
+                -webkit-print-color-adjust: exact;
+                color-adjust: exact;
+            }
+
+            td.task-education {
+                background-color: #fff0e6 !important;
+                -webkit-print-color-adjust: exact;
+                color-adjust: exact;
+            }
+
+            td.task-meeting {
+                background-color: #f5e6ff !important;
+                -webkit-print-color-adjust: exact;
+                color-adjust: exact;
+            }
+
+            td.task-etc {
+                background-color: #f8f9fa !important;
+                -webkit-print-color-adjust: exact;
+                color-adjust: exact;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <h1>🗓️ 주간 업무일지</h1>
+
+    <div class="week-control">
+        <button onclick="changeWeek(-7)">◀ 이전 주</button>
+        <span id="weekLabel"></span>
+        <button onclick="changeWeek(7)">다음 주 ▶</button>
+    </div>
+
+    <div class="tools">
+        <div>
+            🔍 <input type="text" id="searchInput" placeholder="검색어 입력" oninput="searchText()">
+        </div>
+        <div>
+            🏷️ 업무 필터:
+            <select id="taskFilter" onchange="filterByTask()">
+                <option value=""></option>
+                <option value="행정">행정</option>
+                <option value="간접">간접</option>
+                <option value="교육">교육</option>
+                <option value="회의">회의</option>
+                <option value="기타">기타</option>
+            </select>
+        </div>
+        <div>
+            📊 <button onclick="exportMonthlyExcel()">월별 엑셀</button>
+        </div>
+        <div class="dark-mode-toggle">
+            <input type="checkbox" id="darkModeToggle">
+            <label for="darkModeToggle">다크 모드</label>
+        </div>
+    </div>
+
+    <div id="tableContainer"></div>
+
+    <footer>
+        © 2025 주간업무일지 v3.0 - Enhanced Edition
+    </footer>
+
+    <div class="save-feedback" id="saveFeedback">
+        저장 완료!
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+    <script>
+        const weekLabel = document.getElementById("weekLabel");
+        const tableContainer = document.getElementById("tableContainer");
+        let baseDate = new Date();
+        const saveFeedbackElement = document.getElementById('saveFeedback');
+        let currentEditingCell = null;
+
+        const hours = [
+            "09:00~10:00",
+            "10:00~11:00",
+            "11:00~12:00",
+            "12:00~13:00",
+            "13:00~14:00",
+            "14:00~15:00",
+            "15:00~16:00",
+            "16:00~17:00",
+            "17:00~18:00",
+            "18:00~19:30" // 이 구간은 90분으로 계산됩니다.
+        ];
+
+        const tasks = [
+            "행정",
+            "간접",
+            "교육",
+            "회의",
+            "기타"
+        ];
+        
+        // [추가] task 값과 td class를 연결하는 맵
+        const taskClassMap = {
+            '행정': 'task-admin',
+            '간접': 'task-indirect',
+            '교육': 'task-education',
+            '회의': 'task-meeting',
+            '기타': 'task-etc',
+            '': ''
+        };
+
+        // [핵심 변경] 시간대별 분(minute) 계산 함수
+        function getMinutesFromTimeSlot(timeSlot) {
+            if (timeSlot === "18:00~19:30") return 90;
+            return 60;
+        }
+
+        function showSaveFeedback() {
+            saveFeedbackElement.classList.add('show');
+            setTimeout(() => {
+                saveFeedbackElement.classList.remove('show');
+            }, 1500);
+        }
+
+        function getMonday(date) {
+            const d = new Date(date);
+            const day = d.getDay();
+            const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+            return new Date(d.setDate(diff));
+        }
+
+        function renderWeek(date) {
+            const monday = getMonday(date);
+            const days = Array.from({ length: 5 }, (_, i) => {
+                const d = new Date(monday);
+                d.setDate(d.getDate() + i);
+                return d;
+            });
+
+            weekLabel.textContent = `${days[0].getFullYear()}년 ${days[0].getMonth() + 1}월 ${days[0].getDate()}일 ~ ${days[4].getMonth() + 1}월 ${days[4].getDate()}일`;
+
+            let html = '<table id="worklog"><thead><tr><th class="time-col">시간</th>';
+            days.forEach(d => {
+                const label = `${d.getMonth() + 1}/${d.getDate()} (${['월', '화', '수', '목', '금'][d.getDay()-1]})`;
+                html += `<th style="width: 18%">${label}</th>`;
+            });
+            html += '</tr></thead><tbody>';
+
+            // 일별 업무 시간 합계를 저장할 객체 (단순 카운트가 아닌 분 단위 저장)
+            const dailyTasks = {};
+            days.forEach(day => {
+                const dateStr = `${day.getFullYear()}-${String(day.getMonth()+1).padStart(2,'0')}-${String(day.getDate()).padStart(2,'0')}`;
+                dailyTasks[dateStr] = {}; // { "행정": 120, "회의": 60 ... } 형태
+            });
+
+            hours.forEach(hour => {
+                const isLunchTime = hour === "12:00~13:00";
+                html += `<tr><td class="time-col">${hour}</td>`;
+
+                days.forEach(day => {
+                    const dateStr = `${day.getFullYear()}-${String(day.getMonth()+1).padStart(2,'0')}-${String(day.getDate()).padStart(2,'0')}`;
+                    const key = `${dateStr}_${hour}`;
+
+                    if (isLunchTime) {
+                        html += `<td class="lunch-time-cell">점심시간</td>`;
+                    } else {
+                        let savedData = localStorage.getItem(key);
+                        let textContent = '', task = '';
+
+                        if (savedData) {
+                            try {
+                                const data = JSON.parse(savedData);
+                                textContent = data.text || '';
+                                task = data.category || '';
+                                
+                                // [변경] 렌더링 시 시간 계산 로직 적용
+                                if (task && textContent) {
+                                    const duration = getMinutesFromTimeSlot(hour);
+                                    dailyTasks[dateStr][task] = (dailyTasks[dateStr][task] || 0) + duration;
+                                }
+                            } catch (e) {
+                                textContent = savedData;
+                            }
+                        }
+
+                        // [핵심 변경] task에 따른 td 클래스 결정
+                        const tdClass = task ? taskClassMap[task] : '';
+
+                        // [변경] textarea에는 더 이상 색상 클래스를 추가하지 않음
+                        html += `<td class="${tdClass}">
+                            <div class="cell-content-wrapper">
+                                <button class="copy-button" onclick="copyCell('${key}')" title="복사">📋</button>
+                                <div style="position: relative;">
+                                    <textarea data-key="${key}" 
+                                              oninput="saveAndResize(event, '${key}')"
+                                              onclick="setCurrentCell('${key}')">${textContent}</textarea>
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 5px;">
+                                    <select class="task-selector task-selector-colored-options" data-key="${key}" onchange="saveData('${key}')">
+                                        <option value=""></option>
+                                        ${tasks.map(t => `<option value="${t}" ${t === task ? 'selected' : ''}>${t}</option>`).join('')}
+                                    </select>
+                                </div>
+                            </div>
+                        </td>`;
+                    }
+                });
+                html += '</tr>';
+            });
+
+            // [변경] 하단 요약 렌더링 (분 -> 시간/분 변환 표시 가능하지만 현재는 분 단위 유지)
+            html += '<tr><td class="time-col">요약</td>';
+            days.forEach(day => {
+                const dateStr = `${day.getFullYear()}-${String(day.getMonth()+1).padStart(2,'0')}-${String(day.getDate()).padStart(2,'0')}`;
+                
+                const summary = Object.entries(dailyTasks[dateStr])
+                    .map(([task, minutes]) => `${task} ${minutes}분`) // "행정 120분" 형식으로 출력
+                    .join(', ');
+                html += `<td class="daily-summary">${summary}</td>`;
+            });
+            html += '</tr></tbody></table>';
+
+            tableContainer.innerHTML = html;
+
+            document.querySelectorAll('textarea').forEach(textarea => {
+                autoResizeTextarea(textarea);
+            });
+        }
+
+        function autoResizeTextarea(textareaElement) {
+            textareaElement.style.height = 'auto';
+            textareaElement.style.height = (textareaElement.scrollHeight) + 'px';
+        }
+
+        function saveAndResize(event, key) {
+            saveData(key);
+            autoResizeTextarea(event.target);
+        }
+
+        function saveData(key) {
+            const tdElement = document.querySelector(`textarea[data-key="${key}"]`).closest('td');
+            if (!tdElement || tdElement.classList.contains('lunch-time-cell')) {
+                return;
+            }
+
+            const textarea = tdElement.querySelector('textarea');
+            const taskSelect = tdElement.querySelector('.task-selector');
+
+            const data = {
+                text: textarea.value,
+                category: taskSelect.value,
+                timestamp: new Date().toISOString()
+            };
+
+            localStorage.setItem(key, JSON.stringify(data));
+            showSaveFeedback();
+
+            // [핵심 변경] td의 클래스를 업데이트하여 배경색 및 컬러 바 변경
+            const newClass = taskClassMap[taskSelect.value] || '';
+            
+            // 기존 task 클래스 모두 제거
+            Object.values(taskClassMap).forEach(cls => {
+                if(cls) tdElement.classList.remove(cls);
+            });
+            
+            // 새로운 task 클래스 추가
+            if (newClass) {
+                tdElement.classList.add(newClass);
+            }
+
+            const dateStr = key.split('_')[0];
+            updateSpecificDailySummary(dateStr);
+        }
+
+        // [변경] 실시간 요약 업데이트 로직 수정
+        function updateSpecificDailySummary(dateStr) {
+            const counts = {}; // { "행정": 120, "회의": 90 } 분 단위 저장
+            
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                // 해당 날짜의 키인지 확인
+                if (key.startsWith(dateStr) && key.match(/^\d{4}-\d{2}-\d{2}_\d{2}:\d{2}~\d{2}:\d{2}$/)) {
+                    const timeSlot = key.split('_')[1]; // 시간대 추출 (예: 18:00~19:30)
+                    
+                    let savedData = localStorage.getItem(key);
+                    if (savedData) {
+                        try {
+                            const data = JSON.parse(savedData);
+                            const content = data.text ? data.text.trim() : '';
+                            const task = data.category || '';
+                            
+                            if (task && content) {
+                                const duration = getMinutesFromTimeSlot(timeSlot); // 시간대에 따른 분 가져오기
+                                counts[task] = (counts[task] || 0) + duration;
+                            }
+                        } catch (e) {
+                            console.error(`Error parsing localStorage data for key ${key}:`, e);
+                        }
+                    }
+                }
+            }
+
+            const summary = Object.entries(counts)
+                .map(([task, minutes]) => `${task} ${minutes}분`)
+                .join(', ');
+
+            // 테이블 DOM 업데이트 로직
+            const table = document.querySelector("#worklog");
+            const headerRow = table.querySelector("thead tr");
+            let columnIndex = -1;
+
+            const headerDate = new Date(dateStr);
+            const headerDateLabel = `${headerDate.getMonth() + 1}/${headerDate.getDate()}`;
+
+            for (let i = 0; i < headerRow.cells.length; i++) {
+                const headerText = headerRow.cells[i].textContent;
+                if (headerText.startsWith(headerDateLabel)) {
+                    columnIndex = i;
+                    break;
+                }
+            }
+
+            if (columnIndex !== -1) {
+                const tbody = table.querySelector("tbody");
+                const summaryRow = tbody.lastElementChild;
+                const summaryCell = summaryRow.cells[columnIndex];
+                if (summaryCell && summaryCell.classList.contains('daily-summary')) {
+                    summaryCell.textContent = summary;
+                }
+            }
+        }
+
+        function changeWeek(offsetDays) {
+            baseDate.setDate(baseDate.getDate() + offsetDays);
+            renderWeek(baseDate);
+        }
+
+        function searchText() {
+            const keyword = document.getElementById("searchInput").value.toLowerCase();
+            document.querySelectorAll("textarea").forEach(t => {
+                const cell = t.closest('td');
+                // 검색어 하이라이트는 task 클래스와 독립적으로 적용되어야 하므로, task 클래스 제거 대신 highlight 클래스만 토글
+                cell.classList.remove("highlight"); 
+                if (!cell.classList.contains('lunch-time-cell') && keyword && t.value.toLowerCase().includes(keyword)) {
+                    cell.classList.add("highlight");
+                }
+            });
+        }
+
+        function filterByTask() {
+            const task = document.getElementById("taskFilter").value;
+            const targetClass = task ? taskClassMap[task] : ''; // 필터링할 task 클래스
+
+            document.querySelectorAll("#worklog tbody tr").forEach(row => {
+                row.querySelectorAll("td").forEach((cell, index) => {
+                    if (index === 0) return;
+                    if (cell.classList.contains('lunch-time-cell') || cell.classList.contains('daily-summary')) {
+                        cell.style.opacity = "1";
+                        return;
+                    }
+
+                    if (!task) {
+                        cell.style.opacity = "1"; // 필터 해제
+                    } else if (cell.classList.contains(targetClass)) {
+                        cell.style.opacity = "1"; // 일치
+                    } else {
+                        cell.style.opacity = "0.3"; // 불일치
+                    }
+                });
+            });
+        }
+
+        // [변경] 엑셀 내보내기 로직 수정
+        function exportMonthlyExcel() {
+            const wb = XLSX.utils.book_new();
+            const ws_data = [
+                ["날짜", "시간대", "내용", "구분", "시간(분)"]
+            ];
+            const entries = [];
+
+            const currentYear = baseDate.getFullYear();
+            const currentMonth = baseDate.getMonth();
+
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                if (key.match(/^\d{4}-\d{2}-\d{2}_\d{2}:\d{2}~\d{2}:\d{2}$/)) {
+                    const [dateStr, hour] = key.split('_');
+                    const [year, month, day] = dateStr.split('-').map(Number);
+
+                    if (year === currentYear && (month - 1) === currentMonth && hour !== "12:00~13:00") {
+                        let savedData = localStorage.getItem(key);
+                        if (savedData) {
+                            try {
+                                const data = JSON.parse(savedData);
+                                const content = data.text ? data.text.trim() : '';
+                                const task = data.category || '';
+
+                                if (content) {
+                                    entries.push({
+                                        date: dateStr,
+                                        hour: hour,
+                                        task: task,
+                                        content: content,
+                                    });
+                                }
+                            } catch (e) {
+                                console.error(`Error parsing localStorage data for key ${key}:`, e);
+                            }
+                        }
+                    }
+                }
+            }
+
+            entries.sort((a, b) => {
+                const dateComparison = a.date.localeCompare(b.date);
+                if (dateComparison !== 0) {
+                    return dateComparison;
+                }
+                return a.hour.localeCompare(b.hour);
+            });
+
+            entries.forEach(entry => {
+                ws_data.push([
+                    ` ${entry.date} `, // 날짜 앞뒤 공백 추가
+                    ` ${entry.hour} `, // 시간대 앞뒤 공백 추가
+                    ` ${entry.content} `, // 내용 앞뒤 공백 추가
+                    ` [${entry.task}] `, // 구분 앞뒤 및 내부 공백 추가
+                    ` ${getMinutesFromTimeSlot(entry.hour)} ` // 시간(분) 앞뒤 공백 추가
+                ]);
+            });
+
+            const ws = XLSX.utils.aoa_to_sheet(ws_data);
+            const monthName = new Date(currentYear, currentMonth).toLocaleString('ko-KR', {
+                month: 'long'
+            });
+            XLSX.utils.book_append_sheet(wb, ws, `${currentYear}년 ${monthName} 업무일지`);
+            XLSX.writeFile(wb, `${currentYear}년_${String(currentMonth + 1).padStart(2, '0')}월_업무일지.xlsx`);
+        }
+
+        function copyCell(key) {
+            const textarea = document.querySelector(`textarea[data-key="${key}"]`);
+            if (textarea && textarea.value.trim()) {
+                navigator.clipboard.writeText(textarea.value).then(() => {
+                    showSaveFeedback();
+                });
+            }
+        }
+
+        function setCurrentCell(key) {
+            currentEditingCell = key;
+        }
+
+        const darkModeToggle = document.getElementById('darkModeToggle');
+        darkModeToggle.checked = localStorage.getItem('darkMode') === 'enabled';
+        if (darkModeToggle.checked) {
+            document.body.classList.add('dark-mode');
+        }
+
+        darkModeToggle.addEventListener('change', () => {
+            if (darkModeToggle.checked) {
+                document.body.classList.add('dark-mode');
+                localStorage.setItem('darkMode', 'enabled');
+            } else {
+                document.body.classList.remove('dark-mode');
+                localStorage.setItem('darkMode', 'disabled');
+            }
+        });
+
+        renderWeek(baseDate);
+    </script>
+
+</body>
+
+</html>
+```
